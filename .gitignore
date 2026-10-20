@@ -1,0 +1,23 @@
+﻿# File bytecode Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Lingkungan virtual
+.venv/
+venv/
+env/
+
+# Berkas sementara
+*.tmp
+*.log
+
+# Berkas IDE
+.vscode/
+.idea/
+
+# Distribusi
+*.egg-info/
+dist/
+build/

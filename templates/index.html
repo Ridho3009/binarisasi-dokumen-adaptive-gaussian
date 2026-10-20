@@ -1,0 +1,322 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binarisasi Dokumen untuk OCR — Ridho Ramdhan</title>
+  <meta name="description" content="Perbandingan metode binarisasi dokumen: Adaptive Gaussian Thresholding, Global Binary, dan Otsu pada dokumen dengan pencahayaan tidak merata. Dibuat oleh Ridho Ramdhan.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!-- Header                                                            -->
+<!-- ================================================================ -->
+<header class="header">
+  <div class="header-dalam">
+    <div class="logo-bulat" aria-hidden="true">CV</div>
+    <div class="header-teks">
+      <h1>Binarisasi Dokumen untuk OCR</h1>
+      <p class="subjudul">
+        Adaptive Gaussian Thresholding pada dokumen dengan pencahayaan tidak merata
+        &nbsp;|&nbsp; Dibuat oleh <strong style="color:#fff">Ridho Ramdhan</strong>
+      </p>
+    </div>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<!-- Konten Utama                                                      -->
+<!-- ================================================================ -->
+<main class="kontainer-utama">
+
+  <!-- ============================================================ -->
+  <!-- Kolom Kiri                                                    -->
+  <!-- ============================================================ -->
+  <aside class="kolom-kiri">
+
+    <!-- Kartu: Citra Masukan -->
+    <div class="kartu">
+      <div class="kartu-judul">
+        <div class="ikon-judul" aria-hidden="true">🖼</div>
+        <h2>Citra Masukan</h2>
+      </div>
+      <div class="kartu-isi">
+
+        <!-- Daftar citra dari folder contoh -->
+        <p style="font-size:.77rem;color:var(--teks-ketiga);margin-bottom:.6rem">
+          Citra dari folder <code>contoh/</code> — perbarui halaman setelah menambah berkas baru.
+        </p>
+        <ul class="daftar-citra" id="daftar-citra" role="listbox" aria-label="Daftar citra contoh">
+          <li class="pesan-kosong">Memuat...</li>
+        </ul>
+
+        <!-- Area unggah -->
+        <p style="font-size:.8rem;font-weight:600;color:var(--teks-kedua);margin:.9rem 0 .4rem">
+          Unggah Citra Dokumen Sendiri
+        </p>
+        <div class="zona-unggah" id="zona-unggah" role="button"
+             aria-label="Zona unggah citra dokumen">
+          <input type="file" id="input-berkas" accept=".png,.jpg,.jpeg,.bmp"
+                 aria-label="Pilih berkas citra">
+          <span class="ikon-unggah" aria-hidden="true">📂</span>
+          <span class="teks-unggah-utama">Klik atau seret & lepas berkas</span>
+          <p class="teks-unggah-kedua">PNG, JPG, JPEG, BMP — Maks. 10 MB</p>
+        </div>
+        <div class="galat-unggah" id="galat-unggah" role="alert" aria-live="polite"></div>
+
+      </div>
+    </div><!-- /.kartu Citra Masukan -->
+
+    <!-- Kartu: Pengaturan -->
+    <div class="kartu">
+      <div class="kartu-judul">
+        <div class="ikon-judul" aria-hidden="true">⚙</div>
+        <h2>Pengaturan</h2>
+      </div>
+      <div class="kartu-isi">
+        <div class="grup-pengaturan">
+
+          <!-- Ukuran Blok N -->
+          <div>
+            <div class="label-pengaturan">
+              <label for="slider-n">Ukuran Blok <em>N</em> (harus ganjil)</label>
+              <span class="nilai-slider" id="nilai-n">31</span>
+            </div>
+            <input type="range" id="slider-n" min="3" max="151" step="2" value="31"
+                   aria-label="Ukuran blok N" aria-valuemin="3" aria-valuemax="151">
+          </div>
+
+          <!-- Konstanta C -->
+          <div>
+            <div class="label-pengaturan">
+              <label for="slider-c">Konstanta <em>C</em></label>
+              <span class="nilai-slider" id="nilai-c">10</span>
+            </div>
+            <input type="range" id="slider-c" min="0" max="40" step="1" value="10"
+                   aria-label="Konstanta C" aria-valuemin="0" aria-valuemax="40">
+          </div>
+
+          <!-- Ambang Global T -->
+          <div>
+            <div class="label-pengaturan">
+              <label for="slider-t">Ambang Global <em>T</em></label>
+              <span class="nilai-slider" id="nilai-t">127</span>
+            </div>
+            <input type="range" id="slider-t" min="0" max="255" step="1" value="127"
+                   aria-label="Ambang global T" aria-valuemin="0" aria-valuemax="255">
+          </div>
+
+          <!-- Pilihan Blur -->
+          <div>
+            <div class="label-pengaturan">
+              <label>Pra-blur</label>
+            </div>
+            <div class="grup-blur" role="group" aria-label="Pilihan blur">
+              <label class="tombol-blur">
+                <input type="radio" name="pilihan-blur" value="none">Tanpa
+              </label>
+              <label class="tombol-blur">
+                <input type="radio" name="pilihan-blur" value="gaussian3" checked>Gaussian 3×3
+              </label>
+              <label class="tombol-blur">
+                <input type="radio" name="pilihan-blur" value="gaussian5">Gaussian 5×5
+              </label>
+              <label class="tombol-blur">
+                <input type="radio" name="pilihan-blur" value="gaussian7">Gaussian 7×7
+              </label>
+            </div>
+          </div>
+
+          <button class="tombol-atur-ulang" id="tombol-atur-ulang"
+                  aria-label="Atur ulang semua parameter ke nilai awal">
+            ↺ Atur Ulang Parameter
+          </button>
+
+        </div>
+      </div>
+    </div><!-- /.kartu Pengaturan -->
+
+  </aside><!-- /.kolom-kiri -->
+
+  <!-- ============================================================ -->
+  <!-- Kolom Kanan                                                   -->
+  <!-- ============================================================ -->
+  <div class="kolom-kanan">
+
+    <!-- Kartu: Hasil Perbandingan -->
+    <div class="kartu">
+      <div class="kartu-judul">
+        <div class="ikon-judul" aria-hidden="true">📊</div>
+        <h2>Hasil Perbandingan</h2>
+      </div>
+      <div class="kartu-isi">
+        <div class="kisi-hasil" id="kisi-hasil" role="region"
+             aria-label="Perbandingan hasil binarisasi" aria-live="polite">
+          <div class="pesan-proses">Pilih citra untuk memulai perbandingan.</div>
+        </div>
+      </div>
+    </div><!-- /.kartu Hasil -->
+
+    <!-- Kartu: Penjelasan -->
+    <div class="kartu">
+      <div class="kartu-judul">
+        <div class="ikon-judul" aria-hidden="true">📖</div>
+        <h2>Penjelasan Metode</h2>
+      </div>
+      <div class="kartu-isi">
+        <div class="seksi-penjelasan">
+
+          <!-- (i) Pengertian binarisasi dokumen -->
+          <div class="item-penjelasan">
+            <h3>Apa itu Binarisasi Dokumen?</h3>
+            <p>
+              Binarisasi adalah proses mengubah citra keabuan menjadi citra dua nilai:
+              <strong>hitam (0)</strong> untuk foreground (teks, garis) dan
+              <strong>putih (255)</strong> untuk latar belakang.
+              Langkah ini penting sebagai pra-pemrosesan OCR (<em>Optical Character Recognition</em>),
+              digitalisasi arsip, dan sistem pemindai dokumen ponsel, karena memisahkan
+              informasi yang relevan dari gangguan latar.
+            </p>
+          </div>
+
+          <hr class="pemisah">
+
+          <!-- (ii) Mengapa Global Binary dan Otsu gagal -->
+          <div class="item-penjelasan">
+            <h3>Mengapa Global Binary dan Otsu Gagal pada Pencahayaan Tidak Merata?</h3>
+            <p>
+              Metode <strong>Global Binary</strong> menggunakan satu nilai ambang <em>T</em>
+              yang sama untuk seluruh citra. Pada dokumen berbayangan, area gelap memiliki
+              nilai piksel teks yang mendekati nilai piksel latar area terang, sehingga
+              satu nilai <em>T</em> tidak dapat memisahkan keduanya secara bersamaan.
+            </p>
+            <p style="margin-top:.5rem">
+              Metode <strong>Otsu</strong> menghitung <em>T</em> secara otomatis dari
+              histogram global dengan meminimalkan varians dalam kelas. Meski lebih cerdas
+              dari Global Binary, Otsu tetap bergantung pada distribusi global dan gagal
+              di area yang pencahayaannya sangat berbeda dari rata-rata — tulisan di area
+              gelap menjadi tertelan bayangan.
+            </p>
+          </div>
+
+          <hr class="pemisah">
+
+          <!-- (iii) Rumus ambang adaptif -->
+          <div class="item-penjelasan">
+            <h3>Rumus Adaptive Gaussian Thresholding</h3>
+            <p>
+              Untuk setiap piksel pada posisi <em>(x, y)</em>, nilai ambang lokal
+              dihitung dari rata-rata berbobot Gaussian di blok berukuran <em>N×N</em>
+              di sekitarnya, dikurangi konstanta <em>C</em>:
+            </p>
+            <div class="blok-rumus">
+<span class="kunci">T(x,y)</span> = <span class="nilai">GaussianBlur</span>[ I(x,y), ukuran <span class="nilai">N×N</span> ] − <span class="nilai">C</span>
+<span class="komen">// Rata-rata berbobot Gaussian blok N×N dikurangi C</span>
+
+<span class="kunci">g(x,y)</span> = <span class="nilai">255</span>  jika I(x,y) > T(x,y)   <span class="komen">// piksel latar → putih</span>
+         = <span class="nilai">0</span>    jika I(x,y) ≤ T(x,y)   <span class="komen">// piksel teks → hitam</span>
+            </div>
+            <p style="margin-top:.6rem">
+              Bobot Gaussian memberikan pengaruh lebih besar kepada piksel yang lebih dekat
+              ke pusat blok, sehingga menghasilkan ambang yang lebih halus dan tahan
+              terhadap perubahan pencahayaan lokal.
+            </p>
+          </div>
+
+          <hr class="pemisah">
+
+          <!-- (iv) Pengaruh N dan C -->
+          <div class="item-penjelasan">
+            <h3>Pengaruh Parameter <em>N</em> dan <em>C</em></h3>
+            <ul>
+              <li><strong>N terlalu kecil</strong> (misalnya 3–7): blok terlalu sempit,
+                ambang sangat sensitif terhadap noise, hasil biner tampak berbintik.</li>
+              <li><strong>N terlalu besar</strong> (misalnya > 101): blok mendekati ukuran
+                citra, perilaku mendekati thresholding global — bayangan memengaruhi
+                hasil kembali.</li>
+              <li><strong>N optimal</strong>: sekitar 2–4 kali lebar karakter teks
+                (biasanya 21–51 untuk dokumen A4 yang dipindai 300 DPI).</li>
+              <li><strong>C kecil (0–5)</strong>: ambang mendekati rata-rata lokal,
+                teks tipis mungkin terputus.</li>
+              <li><strong>C besar (15–40)</strong>: ambang lebih rendah dari rata-rata,
+                cocok untuk teks tipis tetapi berisiko menampilkan gangguan noise.</li>
+            </ul>
+          </div>
+
+          <hr class="pemisah">
+
+          <!-- (v) Keterbatasan -->
+          <div class="item-penjelasan">
+            <h3>Keterbatasan Metode</h3>
+            <ul>
+              <li>Noda, bercak tinta, atau area gelap lain yang intensitasnya setara
+                dengan teks <strong>tidak dapat dibedakan</strong> dari karakter,
+                sehingga ikut tercetak sebagai hitam dalam hasil biner.</li>
+              <li>Lipatan kertas yang mengakibatkan bayangan lokal yang sempit
+                dapat menyebabkan garis hitam tipis pada hasil.</li>
+              <li>Untuk dokumen dengan teks berwarna-warni, diperlukan pra-pemrosesan
+                tambahan (misalnya normalisasi warna) sebelum binarisasi.</li>
+              <li>Nilai <em>N</em> yang optimal bergantung pada resolusi pemindaian
+                dan ukuran teks — tidak ada nilai universal tunggal.</li>
+            </ul>
+          </div>
+
+          <hr class="pemisah">
+
+          <!-- (vi) Kegunaan -->
+          <div class="item-penjelasan">
+            <h3>Kegunaan</h3>
+            <ul>
+              <li><strong>Pra-pemrosesan OCR</strong>: meningkatkan akurasi pengenalan
+                karakter pada mesin OCR seperti Tesseract.</li>
+              <li><strong>Digitalisasi arsip</strong>: memisahkan teks dari
+                kertas usang, bernoda, atau kuning.</li>
+              <li><strong>Pemindai dokumen ponsel</strong>: mengoreksi efek bayangan
+                akibat sudut pengambilan gambar yang tidak ideal.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /.kartu Penjelasan -->
+
+  </div><!-- /.kolom-kanan -->
+
+</main>
+
+<!-- ================================================================ -->
+<!-- Modal Perbesaran Gambar                                           -->
+<!-- ================================================================ -->
+<div class="modal-latar" id="modal-latar" role="dialog" aria-modal="true"
+     aria-labelledby="modal-judul">
+  <div class="modal-konten">
+    <div class="modal-header">
+      <h3 id="modal-judul"></h3>
+      <button class="tombol-tutup-modal" id="tombol-tutup-modal"
+              aria-label="Tutup modal">✕</button>
+    </div>
+    <img class="modal-gambar" id="modal-gambar" src="" alt="Gambar diperbesar">
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- Notifikasi Galat Global                                           -->
+<!-- ================================================================ -->
+<div class="notif-galat" id="notif-galat" role="alert" aria-live="assertive"></div>
+
+<!-- ================================================================ -->
+<!-- Footer                                                            -->
+<!-- ================================================================ -->
+<footer class="footer">
+  <p>
+    <strong>Binarisasi Dokumen untuk OCR</strong> &mdash;
+    Dibuat oleh <strong>Ridho Ramdhan</strong> &middot;
+    Teknik Informatika, Universitas Catur Insan Cendekia &middot;
+    &copy; 2025
+  </p>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
